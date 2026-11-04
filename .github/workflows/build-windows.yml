@@ -34,6 +34,11 @@ jobs:
         run: |
           git clone --depth 1 --recurse-submodules https://github.com/AgustinSRG/ImageToMapMC.git source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Adjust upstream C++ patch for current source
+        shell: pwsh
+        run: |
+          python fix_patch.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Apply C++ colour, UI and preset changes
         shell: pwsh
         run: |
