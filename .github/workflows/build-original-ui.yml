@@ -1,0 +1,94 @@
+name: Build Original UI - Six Colour Methods
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-original-ui.yml"
+      - "original-ui/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Reassemble verified C++ upgrade sources
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $parts = 0..4 | ForEach-Object { (Get-Content "overlay/part$_.b64" -Raw).Trim() }
+          $base64 = $parts -join ''
+          $archive = [Convert]::FromBase64String($base64)
+          $sha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($archive)).ToLowerInvariant()
+          if ($sha -ne 'ec4d8a0c89df2cd3176841ab0fdcd70b3661464f29ccfa815c0386b316cf775d') { throw "C++ patch archive checksum mismatch: $sha" }
+          [IO.File]::WriteAllBytes("$PWD/overlay.tar.gz", $archive)
+          tar -xzf overlay.tar.gz
+          if ($LASTEXITCODE -ne 0) { throw "Failed to extract patch source" }
+      - name: Fetch ImageToMapMC source and submodules
+        shell: pwsh
+        run: |
+          git clone --depth 1 --recurse-submodules https://github.com/AgustinSRG/ImageToMapMC.git source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Adjust upstream C++ patch for current source
+        shell: pwsh
+        run: |
+          python fix_patch.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Apply C++ colour, UI and preset changes
+        shell: pwsh
+        run: |
+          python apply_upgrade.py source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Restore original UI and install six colour methods
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = [Convert]::FromBase64String((Get-Content "original-ui/patch.b64" -Raw).Trim())
+          $sha = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($archive)).ToLowerInvariant()
+          if ($sha -ne 'efd86124e47bdb8ceb5a3e62a89b245f59a0eeaa1a8d81cf1b264ccddd4f62f7') { throw "Original-UI patch checksum mismatch: $sha" }
+          [IO.File]::WriteAllBytes("$PWD/original-ui-colors.tar.gz", $archive)
+          tar -xzf original-ui-colors.tar.gz
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python enhance_original_ui.py source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify original interface and colour choices
+        shell: pwsh
+        run: |
+          python -c "from pathlib import Path; s=Path('source/src/wx/main_window.cpp').read_text(); assert 'studioToolbar' not in s; assert 'originalImagePanel = new wxImagePanel(this)' in s; assert all(x in s for x in ('Ciede2000', 'Redmean', 'LinearRgb', 'OkLab')); print('Original layout and all six menu methods confirmed')"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Set up vcpkg dependencies
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git C:/vcpkg-mapart
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & C:/vcpkg-mapart/bootstrap-vcpkg.bat -disableMetrics
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & C:/vcpkg-mapart/vcpkg.exe install "wxwidgets:x64-windows" "zlib:x64-windows" "libzip:x64-windows" --classic
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Configure and build Release GUI + CLI
+        shell: pwsh
+        run: |
+          cmake -S source/src -B source/build -G "Visual Studio 17 2022" -A x64 "-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg-mapart/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=x64-windows"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build source/build --config Release --parallel 4
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Package compiled Windows executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item source/build/Release/mcmap-gui.exe artifact/
+          if (Test-Path source/build/Release/mcmap.exe) { Copy-Item source/build/Release/mcmap.exe artifact/ }
+          Copy-Item C:/vcpkg-mapart/installed/x64-windows/bin/*.dll artifact/ -ErrorAction SilentlyContinue
+          if (Test-Path source/LICENSE) { Copy-Item source/LICENSE artifact/ }
+          Set-Content artifact/README.txt 'Original ImageToMapMC interface with six colour approximation methods. Extract all files together. Test NBT exports in a backup world.'
+          Get-ChildItem artifact | Select-Object Name,Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MapArtStudio-OriginalUI-Windows-x64
+          path: artifact/
+          if-no-files-found: error
