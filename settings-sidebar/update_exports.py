@@ -59,3 +59,5 @@ edit('wx/main_window.cpp', '''    StructureExportDialog dialog(project.version, 
     this->workerThread->requestExportStruct(project, dialog.GetPath().ToStdString());''')
 
 edit('wx/main_window.cpp', ' --yes 1', ' --yes')
+
+edit('wx/materials_window.cpp', '    menuBar->Append(menuPresets, "&Presets");', '    menuPresets->Check(ID_Preset_carpets, true);\n    menuBar->Append(menuPresets, "&Presets");')
