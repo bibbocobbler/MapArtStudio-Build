@@ -84,7 +84,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python settings-sidebar/validate_exports.py --source source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Restore compiled dependency cache
+        uses: actions/cache/restore@v4
+        id: deps
+        with:
+          path: C:/vcpkg-mapart
+          key: mapart-x64-windows-deps-v1
       - name: Set up vcpkg dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           git clone --depth 1 https://github.com/microsoft/vcpkg.git C:/vcpkg-mapart
@@ -93,6 +100,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & C:/vcpkg-mapart/vcpkg.exe install "wxwidgets:x64-windows" "zlib:x64-windows" "libzip:x64-windows" --classic
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Save compiled dependency cache
+        if: steps.deps.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:/vcpkg-mapart
+          key: mapart-x64-windows-deps-v1
       - name: Configure and build Release GUI + CLI
         shell: pwsh
         run: |
@@ -127,3 +140,11 @@ jobs:
           name: MapArtStudio-Sidebar-Windows-x64
           path: artifact/
           if-no-files-found: error
+
+      - name: Preserve binaries for failure diagnosis
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MapArtStudio-Diagnostics-Windows-x64
+          path: source/build/Release/
+          if-no-files-found: ignore

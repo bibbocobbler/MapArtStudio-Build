@@ -61,3 +61,7 @@ edit('wx/main_window.cpp', '''    StructureExportDialog dialog(project.version, 
 edit('wx/main_window.cpp', ' --yes 1', ' --yes')
 
 edit('wx/materials_window.cpp', '    menuBar->Append(menuPresets, "&Presets");', '    menuPresets->Check(ID_Preset_carpets, true);\n    menuBar->Append(menuPresets, "&Presets");')
+
+# The console image handlers require a wxWidgets runtime as well as handler registration.
+edit('main_console.cpp', '#include "version.h"', '#include "version.h"\n#include <wx/init.h>')
+edit('main_console.cpp', 'int main(int argc, char **argv)\n{', 'int main(int argc, char **argv)\n{\n    wxInitializer wxRuntime;\n    if (!wxRuntime.IsOk()) { std::cerr << "Cannot initialize image runtime" << std::endl; return 1; }')
