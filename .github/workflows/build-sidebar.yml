@@ -82,6 +82,8 @@ jobs:
         run: |
           python settings-sidebar/update_exports.py source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python settings-sidebar/coordinate_segments.py source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python settings-sidebar/validate_exports.py --source source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Restore compiled dependency cache
@@ -117,7 +119,11 @@ jobs:
         shell: pwsh
         run: |
           $env:PATH = "C:/vcpkg-mapart/installed/x64-windows/bin;" + $env:PATH
+          & source/build/Release/segment-names-test.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python settings-sidebar/validate_exports.py --exe source/build/Release/mcmap.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python settings-sidebar/validate_coordinates.py source/build/Release/mcmap.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Package compiled Windows executable
         shell: pwsh

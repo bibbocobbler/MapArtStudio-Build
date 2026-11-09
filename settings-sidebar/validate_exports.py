@@ -14,7 +14,7 @@ if a.exe:
   img.write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',256,128,8,2,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+bytes([216,127,51])*256)*128))+chunk(b'IEND',b''))
   conf=d/'carpets.conf'; conf.write_text('MODE(WHITELIST)\nADD(COLOR_ORANGE,orange_carpet)\n')
   subprocess.run([str(pathlib.Path(a.exe).resolve()),'--build',str(img),'--format','structure','--output',str(out),'--build-method','flat','--dithering','none','--color-method','euclidean','--color-set',str(conf),'--yes'],check=True)
-  files=list(out.glob('*.nbt')); assert len(files)==2,files
+  files=list(out.glob('*.nbt')); assert {f.name for f in files} == {'export 0,0.nbt','export 0,1.nbt'},files
   for f in files:
    assert '_' not in f.name,f
    data=zlib.decompress(f.read_bytes(),31)
