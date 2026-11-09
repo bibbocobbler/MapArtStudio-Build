@@ -45,5 +45,5 @@ edit('wx/main_window.cpp', '''            name.Replace("_", " ");
 # Compile the shared helper's regression test along with the app.
 shutil.copy2(here / 'segment_names_test.cpp', root / 'segment_names_test.cpp')
 p = root / 'CMakeLists.txt'
-p.write_text(p.read_text() + '\nadd_executable(segment-names-test "segment_names_test.cpp")\n', encoding='utf-8')
+p.write_text(p.read_text(encoding='utf-8-sig') + '\nadd_executable(segment-names-test "segment_names_test.cpp")\n', encoding='utf-8')
 print('Folder-name + bottom-origin row,column naming installed for native and legacy NBT segments')
