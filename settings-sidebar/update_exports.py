@@ -69,3 +69,15 @@ edit('main_console.cpp', 'int main(int argc, char **argv)\n{', 'int main(int arg
 # Function resource names, like legacy map data names, must remain valid Minecraft identifiers.
 for file in ['wx/worker_thread.cpp', 'main_console.cpp']:
  edit(file, 'ss2 << "map " << (total + 1) << ".mcfunction";', 'ss2 << "map_" << (total + 1) << ".mcfunction";')
+
+edit('main_console.cpp', '#include <wx/init.h>', '#include <wx/init.h>\n#include <exception>\n#include <cstdlib>')
+edit('main_console.cpp', '    wxInitializer wxRuntime;', '''    std::set_terminate([]() {
+        try { if (auto error = std::current_exception()) std::rethrow_exception(error); }
+        catch (const std::exception &error) { std::cerr << "Unhandled export error: " << error.what() << std::endl; }
+        catch (...) { std::cerr << "Unhandled nonstandard export error" << std::endl; }
+        std::_Exit(1);
+    });
+    wxInitializer wxRuntime;''')
+edit('main_console.cpp', '    // Initializae progress report thread', '    std::cerr << "Starting export progress" << std::endl;\n    // Initializae progress report thread')
+edit('main_console.cpp', '    wxInitAllImageHandlers();', '    std::cerr << "Registering image handlers" << std::endl;\n    wxInitAllImageHandlers();\n    std::cerr << "Image handlers ready" << std::endl;', 2)
+edit('main_console.cpp', '    if (!image.LoadFile(inputImageFile))', '    std::cerr << "Loading input image" << std::endl;\n    if (!image.LoadFile(inputImageFile))')
