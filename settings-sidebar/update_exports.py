@@ -70,32 +70,7 @@ edit('main_console.cpp', 'int main(int argc, char **argv)\n{', 'int main(int arg
 for file in ['wx/worker_thread.cpp', 'main_console.cpp']:
  edit(file, 'ss2 << "map " << (total + 1) << ".mcfunction";', 'ss2 << "map_" << (total + 1) << ".mcfunction";')
 
-edit('main_console.cpp', '#include <wx/init.h>', '#include <wx/init.h>\n#include <exception>\n#include <cstdlib>')
-edit('main_console.cpp', '    wxInitializer wxRuntime;', '''    std::set_terminate([]() {
-        try { if (auto error = std::current_exception()) std::rethrow_exception(error); }
-        catch (const std::exception &error) { std::cerr << "Unhandled export error: " << error.what() << std::endl; }
-        catch (...) { std::cerr << "Unhandled nonstandard export error" << std::endl; }
-        std::_Exit(1);
-    });
-    wxInitializer wxRuntime;''')
-edit('main_console.cpp', '    // Initializae progress report thread', '    std::cerr << "Starting export progress" << std::endl;\n    // Initializae progress report thread')
-edit('main_console.cpp', '    wxInitAllImageHandlers();', '    std::cerr << "Registering image handlers" << std::endl;\n    wxInitAllImageHandlers();\n    std::cerr << "Image handlers ready" << std::endl;', 2)
-edit('main_console.cpp', '    if (!image.LoadFile(inputImageFile))', '    std::cerr << "Loading input image" << std::endl;\n    if (!image.LoadFile(inputImageFile))')
 
-edit('main_console.cpp', '#include <cstdlib>', '#include <cstdlib>\n#include <windows.h>\n#include <cstdio>')
-edit('main_console.cpp', '    std::set_terminate([]() {', '''    _set_invalid_parameter_handler([](const wchar_t *expression, const wchar_t *function, const wchar_t *file, unsigned int line, uintptr_t) {
-        std::fprintf(stderr, "Invalid CRT argument: %ls | %ls | %ls:%u\\n", expression ? expression : L"?", function ? function : L"?", file ? file : L"?", line);
-        void *frames[32];
-        const unsigned short count = CaptureStackBackTrace(0, 32, frames, nullptr);
-        for (unsigned short i = 0; i < count; ++i) {
-            HMODULE module = nullptr; char path[MAX_PATH] = {};
-            GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, static_cast<LPCSTR>(frames[i]), &module);
-            GetModuleFileNameA(module, path, MAX_PATH);
-            std::fprintf(stderr, "%s + %llx\\n", path, static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(frames[i]) - reinterpret_cast<uintptr_t>(module)));
-        }
-        std::_Exit(1);
-    });
-    std::set_terminate([]() {''')
-edit('main_console.cpp', '    // Resize image if required', '    std::cerr << "Image loaded" << std::endl;\n    // Resize image if required')
-edit('main_console.cpp', '    // Load colors', '    std::cerr << "Loading palette" << std::endl;\n    // Load colors',2)
-edit('CMakeLists.txt', 'target_link_libraries(mcmap nbt++)', 'target_link_libraries(mcmap nbt++)\nif(MSVC)\n target_link_options(mcmap PRIVATE /MAP)\nendif()')
+# Include the terminating NUL in the Windows executable-directory buffer.
+edit('tools/basedir.cpp', 'new char[executablePath.length()]', 'new char[executablePath.length() + 1]')
+edit('tools/basedir.cpp', 'strcpy_s(exePath, executablePath.length(), executablePath.c_str());', 'strcpy_s(exePath, executablePath.length() + 1, executablePath.c_str());')
