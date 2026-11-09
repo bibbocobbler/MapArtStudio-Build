@@ -16,14 +16,14 @@ with tempfile.TemporaryDirectory() as temp:
     conf.write_text('MODE(WHITELIST)\n' + '\n'.join('ADD('+c+','+m+')' for c,m in zip(['COLOR_ORANGE','COLOR_RED','COLOR_BLACK','SNOW','COLOR_LIGHT_GREEN','COLOR_BLUE'],materials)))
     output = root / 'North Wall'
     output.mkdir()
-    subprocess.run([exe,'--build',str(image),'--format','structure','--output',str(output),'--build-method','flat','--dithering','none','--color-method','euclidean','--color-set',str(conf),'--no-support-blocks','--threads','1','--yes'],check=True)
+    subprocess.run([exe,'--build',str(image),'--format','structure','--output',str(output),'--build-method','flat','--dithering','none','--color-method','euclidean','--color-set',str(conf),'--threads','1','--yes'],check=True)
     expected = {'North Wall '+str(row)+','+str(col)+'.nbt' for row in range(2) for col in range(3)}
     assert {p.name for p in output.glob('*.nbt')} == expected
     for top_row in range(2):
         for column in range(3):
             name = 'North Wall '+str(1-top_row)+','+str(column)+'.nbt'
             data = read(output / name)
-            counts = collections.Counter(data['palette'][b['state']]['Name'].replace('minecraft:', '') for b in data['blocks'])
+            counts = collections.Counter(data['palette'][b['state']]['Name'].replace('minecraft:', '') for b in data['blocks'] if data['palette'][b['state']]['Name'].endswith('_carpet'))
             assert counts.most_common(1)[0][0] == materials[top_row*3+column], (name,counts)
             assert data['size'][0] == 128 and data['size'][2] == 129
     print('Six-map orientation PASS: folder prefix, row 0 at bottom, left-to-right columns, NBT contents match every coordinate')
