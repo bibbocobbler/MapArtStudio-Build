@@ -84,6 +84,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python settings-sidebar/coordinate_segments.py source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python settings-sidebar/automatic_segment_folder.py source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python settings-sidebar/validate_exports.py --source source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Restore compiled dependency cache

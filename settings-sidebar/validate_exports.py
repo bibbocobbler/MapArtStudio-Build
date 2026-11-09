@@ -5,6 +5,10 @@ if a.source:
  s=(r/'mapart/project.cpp').read_text(); assert s.count('_carpet)')==16 and 'ADD(COLOR_ORANGE,orange_carpet)' in s
  s=(r/'wx/materials_window.cpp').read_text(); assert 'ADD(COLOR_ORANGE,orange_carpet)' in s
  s=(r/'wx/main_window.cpp').read_text(); b=s.split('addExport("Segments')[1].split('addExport(')[0]; assert 'onExportToStructure(e)' in b and 'schematic' not in b
+ assert s.count('chooseNewSegmentFolder(this, output)') == 2
+ assert 'wxFileName::Mkdir(path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL)' in s
+ assert s.index('dialog.ShowModal() != wxID_OK') < s.index('wxFileName::Mkdir(path')
+ assert 'wxDirExists(path) || wxFileExists(path)' in s
  assert 'name.Replace("_", " ")' in s and 'engineOutput' in s
  print('Source checks passed: NBT segment routing, 16 carpets including orange, space names')
 if a.exe:
