@@ -65,3 +65,7 @@ edit('wx/materials_window.cpp', '    menuBar->Append(menuPresets, "&Presets");',
 # The console image handlers require a wxWidgets runtime as well as handler registration.
 edit('main_console.cpp', '#include "version.h"', '#include "version.h"\n#include <wx/init.h>')
 edit('main_console.cpp', 'int main(int argc, char **argv)\n{', 'int main(int argc, char **argv)\n{\n    wxInitializer wxRuntime;\n    if (!wxRuntime.IsOk()) { std::cerr << "Cannot initialize image runtime" << std::endl; return 1; }')
+
+# Function resource names, like legacy map data names, must remain valid Minecraft identifiers.
+for file in ['wx/worker_thread.cpp', 'main_console.cpp']:
+ edit(file, 'ss2 << "map " << (total + 1) << ".mcfunction";', 'ss2 << "map_" << (total + 1) << ".mcfunction";')
