@@ -57,3 +57,5 @@ edit('wx/main_window.cpp', '''    StructureExportDialog dialog(project.version, 
         wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
     if (dialog.ShowModal() == wxID_CANCEL) return;
     this->workerThread->requestExportStruct(project, dialog.GetPath().ToStdString());''')
+
+edit('wx/main_window.cpp', ' --yes 1', ' --yes')
