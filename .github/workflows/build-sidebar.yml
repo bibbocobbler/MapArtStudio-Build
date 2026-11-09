@@ -32,7 +32,10 @@ jobs:
       - name: Fetch ImageToMapMC source and submodules
         shell: pwsh
         run: |
-          git clone --depth 1 --recurse-submodules https://github.com/AgustinSRG/ImageToMapMC.git source
+          git clone --recurse-submodules https://github.com/AgustinSRG/ImageToMapMC.git source
+          git -C source checkout 8cbe2b3e65959d81795986327266a2b26a2ddd95
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git -C source submodule update --init --recursive
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Adjust upstream C++ patch for current source
         shell: pwsh
@@ -74,6 +77,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -c "from pathlib import Path; s=Path('source/src/wx/main_window.cpp').read_text(); assert 'buildSettingsSidebar' in s and '3D Stacked Carpets' in s and 'Ciede2000' in s and 'exportCarpetUsingOriginal' in s; print('Sidebar and six colour algorithms installed')"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Apply and verify NBT exports and carpet defaults
+        shell: pwsh
+        run: |
+          python settings-sidebar/update_exports.py source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python settings-sidebar/validate_exports.py --source source
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Set up vcpkg dependencies
         shell: pwsh
         run: |
@@ -89,6 +99,12 @@ jobs:
           cmake -S source/src -B source/build -G "Visual Studio 17 2022" -A x64 "-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg-mapart/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_TARGET_TRIPLET=x64-windows"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake --build source/build --config Release --parallel 4
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate compiled NBT exporter
+        shell: pwsh
+        run: |
+          $env:PATH = "C:/vcpkg-mapart/installed/x64-windows/bin;" + $env:PATH
+          python settings-sidebar/validate_exports.py --exe source/build/Release/mcmap.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Package compiled Windows executable
         shell: pwsh
