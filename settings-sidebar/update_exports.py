@@ -46,3 +46,14 @@ edit('wx/main_window.cpp','    const long code=wxExecute(command,wxEXEC_SYNC);',
         wxMessageBox("Export failed or a destination file already exists. Temporary files retained at: " + exportDir,
             "Export error", wxOK | wxICON_ERROR);''')
 print('NBT segments, space-separated structure names, 16-colour carpet defaults installed')
+
+edit('wx/main_window.cpp', '''    StructureExportDialog dialog(project.version, ExportDialogMode::Structure);
+    if (dialog.ShowModal() == wxID_CANCEL)
+    {
+        return; // the user changed idea...
+    }
+
+    this->workerThread->requestExportStruct(project, dialog.getPath());''', '''    wxDirDialog dialog(this, "Choose output folder for NBT segments", wxEmptyString,
+        wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (dialog.ShowModal() == wxID_CANCEL) return;
+    this->workerThread->requestExportStruct(project, dialog.GetPath().ToStdString());''')

@@ -12,7 +12,8 @@ if a.exe:
   d=pathlib.Path(d); img=d/'orange.png'; out=d/'export'; out.mkdir()
   def chunk(t,x): return struct.pack('>I',len(x))+t+x+struct.pack('>I',zlib.crc32(t+x)&0xffffffff)
   img.write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',256,128,8,2,0,0,0))+chunk(b'IDAT',zlib.compress((b'\0'+bytes([216,127,51])*256)*128))+chunk(b'IEND',b''))
-  subprocess.run([str(pathlib.Path(a.exe).resolve()),'--build',str(img),'--format','structure','--output',str(out),'--build-method','flat','--dithering','none','--color-method','euclidean','--yes','1'],check=True)
+  conf=d/'carpets.conf'; conf.write_text('MODE(WHITELIST)\nADD(COLOR_ORANGE,orange_carpet)\n')
+  subprocess.run([str(pathlib.Path(a.exe).resolve()),'--build',str(img),'--format','structure','--output',str(out),'--build-method','flat','--dithering','none','--color-method','euclidean','--color-set',str(conf),'--yes','1'],check=True)
   files=list(out.glob('*.nbt')); assert len(files)==2,files
   for f in files:
    assert '_' not in f.name,f
